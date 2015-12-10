@@ -10,6 +10,8 @@ require 'webrick/https'
 require 'daemon'
 
 require 'checks'
+require 'proxy/events_helper'
+require 'proxy/logging_observer'
 require 'proxy/log'
 require 'proxy/settings'
 require 'proxy/settings/plugin'
@@ -41,6 +43,8 @@ require 'webrick-patch'
 module Proxy
   SETTINGS = Settings.load_global_settings
   VERSION = File.read(File.join(File.dirname(__FILE__), '../VERSION')).chomp
+
+  ::Proxy::EventsObservable.subscribe(::Proxy::LoggingObserver.instance)
 
   ::Sinatra::Base.set :run, false
   ::Sinatra::Base.set :root, APP_ROOT

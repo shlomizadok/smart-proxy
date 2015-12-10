@@ -1,3 +1,4 @@
+require 'proxy/events_helper'
 require 'proxy/log'
 require 'proxy/settings'
 require 'proxy/signal_handler'
@@ -5,6 +6,7 @@ require 'proxy/signal_handler'
 module Proxy
   class Launcher
     include ::Proxy::Log
+    include ::Proxy::EventHelpers
 
     def pid_path
       SETTINGS.daemon_pid
@@ -33,7 +35,7 @@ module Proxy
 
     def https_app
       unless https_enabled?
-        logger.warn "Missing SSL setup, https is disabled."
+        emit_warning("Missing SSL setup, https is disabled.")
         nil
       else
         app = Rack::Builder.new do
@@ -64,14 +66,14 @@ module Proxy
     def load_ssl_private_key(path)
       OpenSSL::PKey::RSA.new(File.read(path))
     rescue Exception => e
-      logger.error "Unable to load private SSL key. Are the values correct in settings.yml and do permissions allow reading?: #{e}"
+      emit_error("Unable to load private SSL key. Are the values correct in settings.yml and do permissions allow reading?: #{e}")
       raise e
     end
 
     def load_ssl_certificate(path)
       OpenSSL::X509::Certificate.new(File.read(path))
     rescue Exception => e
-      logger.error "Unable to load SSL certificate. Are the values correct in settings.yml and do permissions allow reading?: #{e}"
+      emit_error("Unable to load SSL certificate. Are the values correct in settings.yml and do permissions allow reading?: #{e}")
       raise e
     end
 
@@ -90,7 +92,7 @@ module Proxy
     def check_pid
       case pid_status
       when :running, :not_owned
-        logger.error "A server is already running. Check #{pid_path}"
+        emit_error("A server is already running. Check #{pid_path}")
         exit(2)
       when :dead
         File.delete(pid_path)
@@ -126,14 +128,14 @@ module Proxy
 
       (t1 || t2).join
     rescue SignalException => e
-      logger.info("Caught #{e}. Exiting")
+      emit_info("Caught #{e}. Exiting")
       raise
     rescue SystemExit
       # do nothing. This is to prevent the exception handler below from catching SystemExit exceptions.
       raise
     rescue Exception => e
-      logger.error("Error during startup, terminating. #{e}")
-      logger.debug("#{e}:#{e.backtrace.join("\n")}")
+      emit_error("Error during startup, terminating. #{e}")
+      emit_debug(e.to_s, e.backtrace)
 
       puts "Errors detected on startup, see log for details. Exiting: #{e}"
       exit(1)
