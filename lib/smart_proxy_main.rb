@@ -44,7 +44,7 @@ module Proxy
   SETTINGS = Settings.load_global_settings
   VERSION = File.read(File.join(File.dirname(__FILE__), '../VERSION')).chomp
 
-  ::Proxy::EventsObservable.subscribe(::Proxy::LoggingObserver.instance)
+  ::Proxy::EventsObservable.instance.subscribe(::Proxy::LoggingObserver.instance)
 
   ::Sinatra::Base.set :run, false
   ::Sinatra::Base.set :root, APP_ROOT

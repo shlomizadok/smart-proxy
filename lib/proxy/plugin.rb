@@ -1,4 +1,5 @@
 require 'bundler_helper'
+require 'proxy/events_helper'
 
 class ::Proxy::PluginNotFound < ::StandardError; end
 class ::Proxy::PluginVersionMismatch < ::StandardError; end
@@ -89,6 +90,7 @@ end
 class ::Proxy::Plugin
   include ::Proxy::Pluggable
   include ::Proxy::Log
+  include ::Proxy::EventHelpers
 
   class << self
     attr_reader :get_http_rackup_path, :get_https_rackup_path
@@ -130,18 +132,18 @@ class ::Proxy::Plugin
 
   def configure_plugin
     if settings.enabled
-      logger.info("'#{plugin_name}' settings were initialized with default values: %s" % log_used_default_settings) unless settings.used_defaults.empty?
+      emit_info("'#{plugin_name}' settings were initialized with default values: %s" % log_used_default_settings) unless settings.used_defaults.empty?
       validate!
       ::Proxy::Plugins.plugin_enabled(plugin_name, self)
       ::Proxy::BundlerHelper.require_groups(:default, bundler_group)
       after_activation
-      logger.info("Finished initialization of module '#{plugin_name}'")
+      emit_info("Finished initialization of module '#{plugin_name}'")
     else
-      logger.info("'#{plugin_name}' module is disabled.")
+      emit_info("'#{plugin_name}' module is disabled.")
     end
   rescue Exception => e
-    logger.error("Couldn't enable plugin #{plugin_name}: #{e}")
-    logger.debug("#{e}:#{e.backtrace.join("\n")}")
+    emit_error("Couldn't enable plugin #{plugin_name}: #{e}")
+    emit_debug("#{e}:#{e.backtrace.join("\n")}")
     ::Proxy::Plugins.disable_plugin(plugin_name)
   end
 end

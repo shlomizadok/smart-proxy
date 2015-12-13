@@ -25,4 +25,13 @@ class Proxy::RootApi < Sinatra::Base
       log_halt 400, e
     end
   end
+
+  get "/events" do
+    begin
+      content_type :json
+      {:events => ::Proxy::LoggingObserver.stream.map(&:message) }.to_json
+    rescue => e
+      log_halt 400, e
+    end
+  end
 end

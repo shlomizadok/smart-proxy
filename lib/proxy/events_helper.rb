@@ -18,7 +18,7 @@ end
 
 module ::Proxy::EventHelpers
   def emit_event(an_event)
-    ::Proxy::EventsObservable.on_next(an_event)
+    ::Proxy::EventsObservable.instance.on_next(an_event)
   end
 
   def emit_debug(message, backtrace = nil)
